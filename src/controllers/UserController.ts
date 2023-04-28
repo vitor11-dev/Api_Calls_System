@@ -1,12 +1,14 @@
 import bcrypt from 'bcrypt'
 import { Request, Response } from 'express'
+import { IUser } from '../@types/user'
 import { prisma } from '../database/prismaClient'
-import { IUSer } from '../types/UserData'
 
 export class UserController {
-  async create(request: Request, response: Response) {
+  async create(req: Request, res: Response) {
     try {
-      const { name, email, password, profile } = request.body as IUSer
+      if (req.method !== 'POST') return res.status(400).end()
+
+      const { name, email, password } = req.body as IUser
 
       const userExists = await prisma.user.findFirst({
         where: {
@@ -15,9 +17,9 @@ export class UserController {
       })
 
       if (userExists) {
-        return response
+        return res
           .status(400)
-          .json({ message: 'email has already been registered' })
+          .json({ error: 'email has already been registered' })
       }
 
       const hashPassword = await bcrypt.hash(password, 10)
@@ -27,52 +29,52 @@ export class UserController {
           name,
           email,
           password: hashPassword,
-          profile,
         },
       })
 
-      const { password: _, ...userData } = newUser
+      const { password: _, created_at, updated_at, ...userData } = newUser
 
-      return response.status(201).json(userData)
+      return res.status(201).json(userData)
     } catch (error) {
-      return response.status(400).json(error)
+      return res.status(400).json(error)
     }
   }
 
-  async update(request: Request, response: Response) {
+  async update(req: Request, res: Response) {
     try {
-      const { lastEmail } = request.params
-      const { name, email, password, profile } = request.body as IUSer
+      if (req.method !== 'PUT') return res.status(400).end()
+
+      const { email } = req.params
+      const { password } = req.body as IUser
 
       const hashPassword = await bcrypt.hash(password, 10)
 
       const user = await prisma.user.update({
         where: {
-          email: lastEmail,
+          email,
         },
         data: {
-          name,
-          email,
           password: hashPassword,
-          profile,
         },
       })
 
       if (user) {
-        const { password: _, ...userData } = user
+        const { password: _, created_at, updated_at, ...userData } = user
 
-        return response.json(userData)
+        return res.json(userData)
       }
 
-      return response.json(null)
+      return res.json(null)
     } catch (error) {
-      return response.status(400).end()
+      return res.status(400).end()
     }
   }
 
-  async delete(request: Request, response: Response) {
+  async delete(req: Request, res: Response) {
+    if (req.method !== 'DELETE') return res.status(400).end()
+
     try {
-      const { email } = request.params
+      const { email } = req.params
 
       await prisma.user.delete({
         where: {
@@ -80,11 +82,11 @@ export class UserController {
         },
       })
 
-      return response.json({
+      return res.json({
         message: 'successfully deleted user',
       })
     } catch (error) {
-      return response.status(400).end()
+      return res.status(400).json(error).end()
     }
   }
 }

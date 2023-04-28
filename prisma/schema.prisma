@@ -12,9 +12,41 @@ model User {
   name       String
   email      String    @unique
   password   String
-  profile    String?
   created_at DateTime  @default(now())
   updated_at DateTime?
+  clients    Client[]
+  calls      Call[]
 
   @@map("users")
+}
+
+model Client {
+  id         String    @id @default(cuid())
+  name       String
+  email      String    @unique
+  address    String
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id])
+
+  @@map("clients")
+}
+
+enum Status {
+  Aberto
+  Finalizado
+}
+
+model Call {
+  id         String    @id @default(cuid())
+  client     String
+  subject    String
+  status     Status
+  created_at DateTime  @default(now())
+  updated_at DateTime?
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id])
+
+  @@map("calls")
 }

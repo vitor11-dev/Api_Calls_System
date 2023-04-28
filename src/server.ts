@@ -1,7 +1,7 @@
 import cors from 'cors'
 import 'dotenv/config'
 import express, { NextFunction, Request, Response } from 'express'
-import router from './routes'
+import router from './http/routes'
 
 const port = process.env.PORT as number | undefined
 

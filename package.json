@@ -1,10 +1,10 @@
 {
-  "name": "api-barbershop",
+  "name": "api_calls_system",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "dev": "nodemon --transpile-only --exec ts-node ./src/http/server.ts"
+    "dev": "nodemon --transpile-only --exec ts-node ./src/server.ts"
   },
   "dependencies": {
     "@prisma/client": "^4.11.0",

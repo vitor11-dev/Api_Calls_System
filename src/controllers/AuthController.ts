@@ -1,13 +1,15 @@
 import bcrypt from 'bcrypt'
 import { Request, Response } from 'express'
 import jwt from 'jsonwebtoken'
+import { IUser } from '../@types/user'
 import { prisma } from '../database/prismaClient'
-import { IUSer } from '../types/UserData'
 
 export class AuthController {
-  async SignIn(request: Request, response: Response) {
+  async SignIn(req: Request, res: Response) {
     try {
-      const { email, password } = request.body as Partial<IUSer>
+      if (req.method !== 'POST') return res.status(400).end()
+
+      const { email, password } = req.body as Partial<IUser>
 
       const user = await prisma.user.findUnique({
         where: {
@@ -16,20 +18,16 @@ export class AuthController {
       })
 
       if (!user)
-        return response
-          .status(400)
-          .json({ message: 'invalid email or password' })
+        return res.status(400).json({ error: 'invalid email or password' })
 
       const verifyPass = await bcrypt.compare(password!, user?.password)
 
       if (!verifyPass)
-        return response
-          .status(400)
-          .json({ message: 'invalid email or password' })
+        return res.status(400).json({ error: 'invalid email or password' })
 
       const token = jwt.sign(
         {
-          email: user.email,
+          id: user.id,
         },
 
         process.env.JWT_PASS!!,
@@ -39,14 +37,14 @@ export class AuthController {
         }
       )
 
-      const { password: _, ...userData } = user
+      const { password: _, created_at, updated_at, ...userData } = user
 
-      return response.json({
+      return res.json({
         user: userData,
         token,
       })
     } catch (error) {
-      return response.status(400).end()
+      return res.status(400).end()
     }
   }
 }
